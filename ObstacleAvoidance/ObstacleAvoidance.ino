@@ -27,8 +27,6 @@ Servo myservo;      // create servo object to control servo
 
 int rightDistance = 0, leftDistance = 0, middleDistance = 0;
 
-CRGB leds[NUM_LEDS];
-
 //Ultrasonic distance measurement Sub function
 int Distance_test() {
   digitalWrite(TRIG, LOW);   
@@ -46,16 +44,6 @@ void setup() {
   Serial.begin(9600);    
   pinMode(ECHO, INPUT);    
   pinMode(TRIG, OUTPUT);  
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
-  pinMode(ENA, OUTPUT);
-  pinMode(ENB, OUTPUT);
-  stop();
-  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.setBrightness( 125 );
-  FastLED.show();
   //fullScan();
 } 
 
@@ -141,22 +129,4 @@ void rotateLeft_LineTrace() {
   turnLeft();
   int time = micros();
   while(LT_L && micros() - time < LOOP_LIMIT); 
-}
-
-void setBrakeLights(CRGB color) {
-  for(int i = 6; i < 13; i++) {
-    leds[i] = color;
-  }
-  FastLED.show();
-}
-
-void setTurnSignal(CRGB left, CRGB right) {
-  for(int i = 6; i< 8; i++) {
-    leds[i] = left;
-  }
-
-  for(int i = 10; i < 13; i++) {
-    leds[i] = right;
-  }
-  FastLED.show();
 }
