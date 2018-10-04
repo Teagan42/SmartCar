@@ -17,40 +17,78 @@
 
 #define LOOP_LIMIT 40
 
+bool objectAvoidanceMode = false;
+
 void setup() { 
-  myservo.attach(3);  // attach servo on pin 3 to servo object
   Serial.begin(9600);  
   setupCar();  
   setupSonar();
+  setSpeed(100);
 } 
 
 void loop() { 
   FastLED.clear();
-    middleDistance = pingDistance(MIDDLE_ANGLE);
-
-    if(middleDistance <= 20) {
-      stop();
+  if(LT_M || LT_R || LT_L) {
+        objectAvoidanceMode = false;
+      }
+    int leftDistance = pingDistance(LEFT_ANGLE);
+    if (leftDistance <= 20) {
       Serial.println("Obstacle!");
-      Serial.println("Testing right");
-      rightDistance = pingDistance(RIGHT_ANGLE);
-      Serial.println("Testing left");
-      leftDistance = pingDistance(LEFT_ANGLE);
-      setAngle(MIDDLE_ANGLE);
+      stop();
+    }
+    if(LT_M || LT_R || LT_L) {
+        objectAvoidanceMode = false;
+      }
+    int middleDistance = pingDistance(MIDDLE_ANGLE);
+    if (middleDistance <= 20) {
+      Serial.println("Obstacle!");
+      stop();
+    }
+    if(LT_M || LT_R || LT_L) {
+        objectAvoidanceMode = false;
+      }
+    int rightDistance = pingDistance(RIGHT_ANGLE);
+    if (rightDistance <= 20) {
+      Serial.println("Obstacle!");
+      stop();
+    }
+    if(LT_M || LT_R || LT_L) {
+        objectAvoidanceMode = false;
+      }
+    setAngle(MIDDLE_ANGLE);
+
+    if(middleDistance <= 20 || leftDistance <= 20 || rightDistance <= 20) {
+      stop();
+      setSpeed(100);
+//      Serial.println("Testing right");
+//      int rightDistance = pingDistance(RIGHT_ANGLE);
+//      Serial.println("Testing left");
+//      int leftDistance = pingDistance(LEFT_ANGLE);
       
       if(rightDistance > leftDistance) {
-        rotateRight(); 
+        setSpeed(255);
+        rotateRight();
+        delay(60);
       }
       else if(rightDistance < leftDistance) {
+        setSpeed(255);
         rotateLeft(); 
+        delay(60);
       }
       else if((rightDistance <= 20) || (leftDistance <= 20)) {
+        setSpeed(200);
         backward();
         delay(180);
       }
       else {
+        setSpeed(150);
         forward();
       }
-    } else {
+      if(!LT_M && !LT_R && !LT_L) {
+        objectAvoidanceMode= true;
+      }
+    } else if (!objectAvoidanceMode) {
+      setSpeed(255);
       if(LT_M){
         forward();
       }
@@ -60,7 +98,14 @@ void loop() {
       else if(LT_L) {
         rotateLeft_LineTrace();  
       }
-    }                     
+    } else {
+      // TODO : Track movement
+      setSpeed(150);
+      forward();  
+      if(LT_M || LT_R || LT_L) {
+        objectAvoidanceMode = false;
+      }
+    }
 }
 
 void rotateRight_LineTrace() {
