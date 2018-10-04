@@ -21,21 +21,23 @@ int Trig = A5;
 #define IN3 9
 #define IN4 11
 #define carSpeed 255
-#define RIGHT_ANGLE 180 //10
+#define RIGHT_ANGLE 135 //10
 #define MIDDLE_ANGLE 90
-#define LEFT_ANGLE 10 //180
+#define LEFT_ANGLE 45 //180
 #define COLOR_ORDER GRB
 #define CHIPSET     WS2812B
 #define NUM_LEDS    33
 #define LOOP_LIMIT 40
 #define SCAN_INTERVAL 5
-#define SCAN_NUM (RIGHT_ANGLE - LEFT_ANGLE) / SCAN_INTERVAL
+#define SCAN_INTERVAL_RADIANS SCAN_INTERVAL * 3.14159 / 180
+#define SCAN_NUM (RIGHT_ANGLE - LEFT_ANGLE) / SCAN_INTERVAL + 1
 
 int rightDistance = 0, leftDistance = 0, middleDistance = 0;
 
-int[SCAN_NUM] distanceScan;
+int distanceScan[SCAN_NUM];
+int nextScanIndex = 0;
 
-//NewPing sonar(Trig, Echo, 200);
+NewPing sonar(Trig, Echo, 5000);
 CRGB leds[NUM_LEDS];
 
 void forward(){ 
@@ -125,13 +127,42 @@ int Distance_test() {
   return (int)Fdistance;
 }
 
-void fullScan() {
-  
+int scanIndexToAngle(int scanIndex) {
+  return scanIndex * SCAN_INTERVAL + LEFT_ANGLE;
 }
 
-void scanNext() {
-  
+int scanIndexLength(int startScanIndex, int endScanIndex) {
+  int degreeStart = scanIndexToAngle(startScanIndex);
+  int degreeEnd = scanIndexToAngle(endScanIndex);
+  float avgDistance = 0;
+  for (int i = startScanIndex; i <= endScanIndex; i++) {
+    avgDistance += distanceScan[i];
+  }
+  avgDistance /= (endScanIndex - (startScanIndex + 1));
+  float angle = (degreeEnd - degreeStart) * 3.14159 /180;
+  return tan(angle) * avgDistance;
 }
+
+void fullScan() {
+  for(int i = 0; i < SCAN_NUM; i++) {
+    int angle = scanIndexToAngle(i);
+    myservo.write(angle);
+    delay(200);
+    distanceScan[i] = Distance_test();//sonar.ping_cm();
+    Serial.print(angle);
+    Serial.print(": ");
+    Serial.println(distanceScan[i]);
+    delay(400);
+  }
+  myservo.write(MIDDLE_ANGLE);
+}
+
+//void scanNext() {
+//  int angle = scanIndexToAngle(nextScanIndex);
+//  myservo.write(angle);
+//  delay(200);
+//  distanceScan[nextScanIndex++] = Distance_test();//sonar.ping_cm();
+//}
 
 void setup() { 
   myservo.attach(3);  // attach servo on pin 3 to servo object
@@ -148,16 +179,37 @@ void setup() {
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness( 125 );
   FastLED.show();
+  fullScan();
 } 
 
 void loop() { 
   FastLED.clear();
-//    myservo.write(MIDDLE_ANGLE);  //setservo position according to scaled value
-//    delay(10); 
-//    Serial.println("Testing middle");
-//    middleDistance = Distance_test();
-//
-//    if(middleDistance <= 20) {     
+    myservo.write(MIDDLE_ANGLE);  //setservo position according to scaled value
+    delay(30); 
+    Serial.println("Testing middle");
+    middleDistance = Distance_test();
+
+    if(middleDistance <= 20) {   
+      Serial.println("Obstacle!");
+      stop();
+      fullScan();
+      for (int i = 1; i < SCAN_NUM/2 - 1; i++) {
+        int distanceLeft = distanceScan[90-i];
+        int distanceRight = distanceScan[90+i];
+        if (distanceLeft <= 25 || distanceRight <= 25) {
+          continue;
+        } else if (distanceLeft < distanceRight) {
+          turnRight();
+          delay(50);
+          stop();
+          break;
+        } else if (distanceLeft > distanceRight) {
+          turnLeft();
+          delay(50);
+          stop();
+          break;
+        }
+      }
 //      stop();
 //      delay(500);     
 //      myservo.write(RIGHT_ANGLE);          
@@ -189,8 +241,7 @@ void loop() {
 //      else {
 //        forward();
 //      }
-//    }  
-//    else {
+    } else {
       if(LT_M){
         forward();
       }
@@ -200,7 +251,7 @@ void loop() {
       else if(LT_L) {
         rotateLeft();  
       }
-//    }                     
+    }                     
 }
 
 void rotateRight() {
