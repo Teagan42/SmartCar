@@ -32,6 +32,7 @@ void setupSonar() {
   pinMode(TRIG, OUTPUT); 
 
   sonarServo.attach(SERVO_PIN);
+  setAngle(90);
 }
 
 void setAngle(int angle) {

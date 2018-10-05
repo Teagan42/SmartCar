@@ -4,11 +4,7 @@
 #include <FastLED.h>
 #include "Car.h"
 #include "Sonar.h"
-
-//Line Tracking IO define
-#define LT_R !digitalRead(10)
-#define LT_M !digitalRead(4)
-#define LT_L !digitalRead(2)
+#include "LineTracking.h"
 
 // Sonar Definition
 #define RIGHT_ANGLE 135 //10
@@ -17,44 +13,53 @@
 
 #define LOOP_LIMIT 40
 
+void callbackLineTracking(Direction dir);
+void timerCallback();
+
+LineTrackingThread lineTrackingThread(callbackLineTracking);
+
+ThreadController controller = ThreadController();
+
 bool objectAvoidanceMode = false;
+
+void timerCallback(){
+  controller.run();
+}
 
 void setup() { 
   Serial.begin(9600);  
   setupCar();  
   setupSonar();
-  setSpeed(100);
+  setSpeed(200);
+
+  lineTrackingThread.setInterval(50);
+  controller.add(&lineTrackingThread);
+
+   Timer1.initialize(20000);
+   Timer1.attachInterrupt(timerCallback);
+   Timer1.start();
 } 
 
 void loop() { 
   FastLED.clear();
-  if(LT_M || LT_R || LT_L) {
-        objectAvoidanceMode = false;
-      }
+//  if(LT_M || LT_R || LT_L) {
+//        objectAvoidanceMode = false;
+//      }
     int leftDistance = pingDistance(LEFT_ANGLE);
     if (leftDistance <= 20) {
       Serial.println("Obstacle!");
       stop();
     }
-    if(LT_M || LT_R || LT_L) {
-        objectAvoidanceMode = false;
-      }
     int middleDistance = pingDistance(MIDDLE_ANGLE);
     if (middleDistance <= 20) {
       Serial.println("Obstacle!");
       stop();
     }
-    if(LT_M || LT_R || LT_L) {
-        objectAvoidanceMode = false;
-      }
     int rightDistance = pingDistance(RIGHT_ANGLE);
     if (rightDistance <= 20) {
       Serial.println("Obstacle!");
       stop();
     }
-    if(LT_M || LT_R || LT_L) {
-        objectAvoidanceMode = false;
-      }
     setAngle(MIDDLE_ANGLE);
 
     if(middleDistance <= 20 || leftDistance <= 20 || rightDistance <= 20) {
@@ -84,27 +89,10 @@ void loop() {
         setSpeed(150);
         forward();
       }
-      if(!LT_M && !LT_R && !LT_L) {
-        objectAvoidanceMode= true;
-      }
-    } else if (!objectAvoidanceMode) {
-      setSpeed(255);
-      if(LT_M){
-        forward();
-      }
-      else if(LT_R) { 
-        rotateRight_LineTrace();                            
-      }   
-      else if(LT_L) {
-        rotateLeft_LineTrace();  
-      }
-    } else {
+    } else if (objectAvoidanceMode) {
       // TODO : Track movement
       setSpeed(150);
-      forward();  
-      if(LT_M || LT_R || LT_L) {
-        objectAvoidanceMode = false;
-      }
+      forward();
     }
 }
 
@@ -118,4 +106,33 @@ void rotateLeft_LineTrace() {
   turnLeft();
   int time = micros();
   while(LT_L && micros() - time < LOOP_LIMIT); 
+}
+
+void callbackLineTracking(Direction dir) {
+  Serial.print("Line Callback: ");
+  switch(dir) {
+    case NOT_FOUND: 
+    Serial.println("NOT FOUND");
+    break;
+    case PERPENDICULAR:
+      Serial.println("PERP");
+      objectAvoidanceMode = false;
+    // TODO: Rotate, which way?
+      break;
+    case FORWARD:
+    Serial.println("Forward");
+      objectAvoidanceMode = false;
+      forward();
+      break;
+    case LEFT:
+    Serial.println("LEFT");
+      objectAvoidanceMode = false;
+      turnLeft();  
+      break;
+    case RIGHT:
+    Serial.println("RIGHT");
+      objectAvoidanceMode = false;
+      turnRight();
+      break;
+  }
 }

@@ -85,8 +85,8 @@ void rotateLeft() {
 }
 
 void turnLeft() {
-  digitalWrite(ENA, carSpeed);
-  analogWrite(ENB, carSpeed/2);
+  analogWrite(ENA, carSpeed);
+  analogWrite(ENB, carSpeed/4);
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
@@ -107,7 +107,7 @@ void rotateRight() {
 }
 
 void turnRight() {
-  digitalWrite(ENA, carSpeed/2);
+  analogWrite(ENA, carSpeed/4);
   analogWrite(ENB, carSpeed);
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
