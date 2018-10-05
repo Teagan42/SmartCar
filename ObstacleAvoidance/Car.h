@@ -2,6 +2,7 @@
 #define __CAR_H__
 
 #include <Arduino.h>
+#include <FastLED.h>
 
 // Motor Pins
 #define ENA 5
