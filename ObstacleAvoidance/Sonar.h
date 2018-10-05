@@ -1,46 +1,29 @@
 #ifndef __SONAR_H__
 #define __SONAR_H__
 
+#include <Servo.h>
+#include <Arduino.h>
+
 #define ECHO A4  
 #define TRIG A5
 #define SERVO_PIN 3
 
-int pingDistance();
-int pingDistance(int angle);
-void setupSonar();
-void setAngle(int angle);
+// Sonar Definition
+#define RIGHT_ANGLE 135 //10
+#define MIDDLE_ANGLE 90
+#define LEFT_ANGLE 45 //180
 
-Servo sonarServo;
-int lastAngle = 0;
+class Sonar {
+  public:
+  Sonar(Servo* servo);
+  int pingDistance();
+  int pingDistance(int angle);
+  void setup();
+  void setAngle(int angle);
 
-int pingDistance(int angle) {
-  setAngle(angle);
-  return pingDistance();
-}
-
-int pingDistance() {
-  digitalWrite(TRIG, LOW);   
-  delayMicroseconds(2);
-  digitalWrite(TRIG, HIGH);  
-  delayMicroseconds(20);
-  digitalWrite(TRIG, LOW);   
-  return (int)(pulseIn(ECHO, HIGH) / 58);
-}
-
-void setupSonar() {
-  pinMode(ECHO, INPUT);    
-  pinMode(TRIG, OUTPUT); 
-
-  sonarServo.attach(SERVO_PIN);
-  setAngle(90);
-}
-
-void setAngle(int angle) {
-  if (angle != lastAngle) {
-    sonarServo.write(angle);
-    lastAngle = angle;
-    delay(300);
-  }
-}
+  private:
+  Servo* servo;
+  int lastAngle = -100;
+};
 
 #endif

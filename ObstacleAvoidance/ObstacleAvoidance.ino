@@ -1,22 +1,20 @@
 //www.elegoo.com
 
-#include <Servo.h>  //servo library
 #include <FastLED.h>
 #include "Car.h"
-#include "Sonar.h"
+#include "SonarThread.h"
 #include "LineTracking.h"
-
-// Sonar Definition
-#define RIGHT_ANGLE 135 //10
-#define MIDDLE_ANGLE 90
-#define LEFT_ANGLE 45 //180
 
 #define LOOP_LIMIT 40
 
 void callbackLineTracking(Direction dir);
+void callbackSonarObstacle();
 void timerCallback();
 
+Sonar sonar(&Servo());
+
 LineTrackingThread lineTrackingThread(callbackLineTracking);
+SonarThread sonarThread(&sonar, callbackSonarObstacle);
 
 ThreadController controller = ThreadController();
 
@@ -29,11 +27,13 @@ void timerCallback(){
 void setup() { 
   Serial.begin(9600);  
   setupCar();  
-  setupSonar();
+  sonar.setup();
   setSpeed(200);
 
   lineTrackingThread.setInterval(50);
+  sonarThread.setInterval(40);
   controller.add(&lineTrackingThread);
+  controller.add(&sonarThread);
 
    Timer1.initialize(20000);
    Timer1.attachInterrupt(timerCallback);
@@ -45,22 +45,22 @@ void loop() {
 //  if(LT_M || LT_R || LT_L) {
 //        objectAvoidanceMode = false;
 //      }
-    int leftDistance = pingDistance(LEFT_ANGLE);
+    int leftDistance = sonar.pingDistance(LEFT_ANGLE);
     if (leftDistance <= 20) {
       Serial.println("Obstacle!");
       stop();
     }
-    int middleDistance = pingDistance(MIDDLE_ANGLE);
+    int middleDistance = sonar.pingDistance(MIDDLE_ANGLE);
     if (middleDistance <= 20) {
       Serial.println("Obstacle!");
       stop();
     }
-    int rightDistance = pingDistance(RIGHT_ANGLE);
+    int rightDistance = sonar.pingDistance(RIGHT_ANGLE);
     if (rightDistance <= 20) {
       Serial.println("Obstacle!");
       stop();
     }
-    setAngle(MIDDLE_ANGLE);
+    sonar.setAngle(MIDDLE_ANGLE);
 
     if(middleDistance <= 20 || leftDistance <= 20 || rightDistance <= 20) {
       stop();
@@ -106,6 +106,14 @@ void rotateLeft_LineTrace() {
   turnLeft();
   int time = micros();
   while(LT_L && micros() - time < LOOP_LIMIT); 
+}
+
+void callbackSonarObstacle() {
+  stop();
+  objectAvoidanceMode = true;
+  lineTrackingThread.enabled = false;
+  // Perform Obstacle Avoidance
+  // TODO: Re-enable linetracking thread once avoidance started
 }
 
 void callbackLineTracking(Direction dir) {
