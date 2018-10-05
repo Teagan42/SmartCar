@@ -116,16 +116,30 @@ void callbackRightTrace() {
 
 void traceLine() {
   if (!LT_M && !LT_R && !LT_L) {
-    return; // TODO:
+    switch (lastDirection) {
+      case FORWARD:
+      case LEFT:
+        rotateRight();
+        int now = millis();
+        while(!LT_R && !LT_M && !LT_L && millis() - now < LOOP_LIMIT);
+        break;
+      case RIGHT:
+        rotateLeft();
+        while(!LT_R && !LT_M && !LT_L && millis() - now < LOOP_LIMIT);
+        break;
+    }
   } else if (LT_M && LT_R && LT_L) {
     return; // TODO:
   } else if (LT_M) {
     objectAvoidanceMode = false;
     forward();
+    lastDirection = FORWARD;
   }
   else if (LT_R) {
     callbackRightTrace();
+    lastDirection = RIGHT;
   } else if (LT_L) {
     callbackLeftTrace();
+    lastDirection = LEFT;
   }
 }
