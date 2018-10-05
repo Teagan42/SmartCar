@@ -1,24 +1,16 @@
-#include <FastLED.h>
+// MarioKart
 
-#define LED_PIN     7
-#define ENA 5
-#define ENB 6
-#define IN1 13
-#define IN2 8
-#define IN3 9
-#define IN4 11
-#define carSpeed 255
-#define RIGHT_ANGLE 135 //10
-#define MIDDLE_ANGLE 90
-#define LEFT_ANGLE 45 //180
-#define COLOR_ORDER GRB
-#define CHIPSET     WS2812B
-#define NUM_LEDS    33
+#include "Car.h"
+
 #define HUE_CHANGE 255/NUM_LEDS
 
-int rainbowStart = 0;
+// Speed Definitions
+#define MAX_SPEED 255
+#define MED_SPEED 150
 
-CRGB leds[NUM_LEDS];
+int rainbowStart = 0;
+bool state = LOW;
+char getstr;
 
 void starPower() {
   if (micros() % 200) {
@@ -32,8 +24,32 @@ void setup() {
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(125);
   FastLED.show();
+  Serial.begin(9600);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  setupCar();
+  stop();
 }
 
 void loop() {
   starPower();
+  getstr = Serial.read();
+  switch (getstr) {
+    case 'i': setSpeed(MED_SPEED); forward();     break; // forward medium speed
+    case 'x': setSpeed(MAX_SPEED); forward();     break; // forward max speed
+    case 'k': setSpeed(MED_SPEED); backward();     break; // back: medium speed
+    case 'z': setSpeed(MAX_SPEED); backward();     break; // back: max speed
+    case 'j': setSpeed(MAX_SPEED); turnLeft();    break; 
+    case 'l': setSpeed(MAX_SPEED); turnRight();   break;
+    case 'p': stop();        break;
+    case 'u': setSpeed(MAX_SPEED); rotateLeft();  break;
+    case 'y': setSpeed(MAX_SPEED); rotateRight(); break;
+    default:  break;
+  }
 }
+
+// FastLED.clear()
