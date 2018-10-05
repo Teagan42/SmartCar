@@ -27,6 +27,8 @@
 #define RIGHT_BRAKE_LED_START_INDEX 10
 #define RIGHT_BRAKE_LED_END_INDEX BRAKE_LED_END_INDEX
 
+#define BEAR_MILLISECONDS 50
+
 void stop();
 void setBrakeLights(CRGB lightColor);
 void setTurnSignal(CRGB leftColor, CRGB rightColor);
@@ -86,12 +88,12 @@ void rotateLeft() {
 }
 
 void turnLeft() {
-  analogWrite(ENA, carSpeed);
-  analogWrite(ENB, carSpeed/4);
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
+  analogWrite(ENA, carSpeed/8);
+  analogWrite(ENB, carSpeed);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH); 
+  digitalWrite(IN4, HIGH);
   Serial.println("Left");
   setTurnSignal(CRGB(255,255,0), CRGB(0, 0, 0));
 }
@@ -108,12 +110,12 @@ void rotateRight() {
 }
 
 void turnRight() {
-  analogWrite(ENA, carSpeed/4);
-  analogWrite(ENB, carSpeed);
+  analogWrite(ENA, carSpeed);
+  analogWrite(ENB, carSpeed/8);
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
   Serial.println("Right");
   setTurnSignal(CRGB(0,0,0), CRGB(255, 255, 0));
 }
