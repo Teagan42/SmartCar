@@ -1,21 +1,25 @@
 #ifndef __SONAR_H__
 #define __SONAR_H__
 
+#include <NewPing.h>
 #include <Servo.h>
 #include <Arduino.h>
+#include <TimerOne.h>
+#include <Thread.h>
+#include <ThreadController.h>
 
 #define ECHO A4  
 #define TRIG A5
-#define SERVO_PIN 3
+#define SERVO_PIN 10
 
 // Sonar Definition
 #define RIGHT_ANGLE 135 //10
 #define MIDDLE_ANGLE 90
 #define LEFT_ANGLE 45 //180
 
-class Sonar {
+class SonarServo {
   public:
-  Sonar(Servo* servo);
+  SonarServo(Servo* servo);
   int pingDistance();
   int pingDistance(int angle);
   void setup();
@@ -23,6 +27,7 @@ class Sonar {
 
   private:
   Servo* servo;
+//  NewPing* sonar;
   int lastAngle = -100;
 };
 
