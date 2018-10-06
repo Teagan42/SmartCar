@@ -13,9 +13,9 @@
 #define SERVO_PIN 10
 
 // Sonar Definition
-#define RIGHT_ANGLE 135 //10
+#define RIGHT_ANGLE 180 //10
 #define MIDDLE_ANGLE 90
-#define LEFT_ANGLE 45 //180
+#define LEFT_ANGLE 0 //180
 
 class SonarServo {
   public:

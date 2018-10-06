@@ -27,6 +27,12 @@
 #define RIGHT_BRAKE_LED_START_INDEX 10
 #define RIGHT_BRAKE_LED_END_INDEX BRAKE_LED_END_INDEX
 
+#define LEFT_HEAD_LED_START_INDEX 29
+#define LEFT_HEAD_LED_END_INDEX 31
+
+#define RIGHT_HEAD_LED_START_INDEX 25
+#define RIGHT_HEAD_LED_END_INDEX 27
+
 #define BEAR_MILLISECONDS 50
 
 void stop();
@@ -128,6 +134,7 @@ void stop() {
 }
 
 void setBrakeLights(CRGB color) {
+  FastLED.clear();
   for(int i = BRAKE_LED_START_INDEX; i < BRAKE_LED_END_INDEX; i++) {
     leds[i] = color;
   }
@@ -135,11 +142,20 @@ void setBrakeLights(CRGB color) {
 }
 
 void setTurnSignal(CRGB left, CRGB right) {
+  FastLED.clear();
   for(int i = LEFT_BRAKE_LED_START_INDEX; i < LEFT_BRAKE_LED_END_INDEX; i++) {
     leds[i] = left;
   }
 
+  for(int i = LEFT_HEAD_LED_START_INDEX; i < LEFT_HEAD_LED_END_INDEX; i++) {
+    leds[i] = left;
+  }
+
   for(int i = RIGHT_BRAKE_LED_START_INDEX; i < RIGHT_BRAKE_LED_END_INDEX; i++) {
+    leds[i] = right;
+  }
+
+  for(int i = RIGHT_HEAD_LED_START_INDEX; i < RIGHT_HEAD_LED_END_INDEX; i++) {
     leds[i] = right;
   }
   FastLED.show();
