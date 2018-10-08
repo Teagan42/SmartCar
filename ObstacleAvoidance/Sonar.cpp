@@ -34,12 +34,9 @@ void SonarServo::setup() {
 }
 
 void SonarServo::setAngle(int angle) {
-  Serial.print("Requested Angle: ");
-  Serial.print(angle);
   if (angle != lastAngle) {
-    Serial.print(" Turning");
     this->servo->write(angle);
+    delay(2*abs(angle - lastAngle));
     lastAngle = angle;
   }
-  Serial.println();
 }

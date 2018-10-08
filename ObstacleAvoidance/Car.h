@@ -35,6 +35,14 @@
 
 #define BEAR_MILLISECONDS 50
 
+enum Direction {
+  LEFT,
+  RIGHT,
+  FORWARD,
+  BACKWARD,
+  NOT_FOUND
+};
+
 void stop();
 void setBrakeLights(CRGB lightColor);
 void setTurnSignal(CRGB leftColor, CRGB rightColor);
@@ -42,6 +50,11 @@ void setTurnSignal(CRGB leftColor, CRGB rightColor);
 CRGB leds[NUM_LEDS];
 
 int carSpeed = 255;
+Direction currentDirection = NOT_FOUND;
+
+Direction getCurrentRotation() {
+  return currentDirection;
+}
 
 void setSpeed(int speed) {
   carSpeed = speed;
@@ -68,7 +81,7 @@ void forward(){
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  Serial.println("Forward");
+  currentDirection = FORWARD;
   setBrakeLights(CRGB(0,255,0));
 }
 
@@ -79,57 +92,57 @@ void backward() {
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
-  Serial.println("Back");
+  currentDirection = BACKWARD;
 }
 
-void rotateLeft() {
-  analogWrite(ENA, carSpeed);
-  analogWrite(ENB, carSpeed);
+void rotateLeft(int multiplier = 1) {
+  analogWrite(ENA, 255/multiplier);
+  analogWrite(ENB, 255);
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH); 
-  Serial.println("Left");
+  currentDirection = LEFT;
   setTurnSignal(CRGB(255,255,0), CRGB(0, 0, 0));
 }
 
-void turnLeft() {
-  analogWrite(ENA, carSpeed/4);
+void turnLeft(int multiplier = 4) {
+  analogWrite(ENA, carSpeed/multiplier);
   analogWrite(ENB, carSpeed);
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  Serial.println("Left");
+  currentDirection = LEFT;
   setTurnSignal(CRGB(255,255,0), CRGB(0, 0, 0));
 }
 
-void rotateRight() {
-  analogWrite(ENA, carSpeed);
-  analogWrite(ENB, carSpeed);
+void rotateRight(int multiplier = 1) {
+  analogWrite(ENA, 255);
+  analogWrite(ENB, 255/multiplier);
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
-  Serial.println("Right");
+  currentDirection = RIGHT;
   setTurnSignal(CRGB(0,0,0), CRGB(255, 255, 0));
 }
 
-void turnRight() {
+void turnRight(int multiplier = 4) {
   analogWrite(ENA, carSpeed);
-  analogWrite(ENB, carSpeed/4);
+  analogWrite(ENB, carSpeed/multiplier);
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  Serial.println("Right");
+  currentDirection = RIGHT;
   setTurnSignal(CRGB(0,0,0), CRGB(255, 255, 0));
 }
 
 void stop() {
   digitalWrite(ENA, LOW);
   digitalWrite(ENB, LOW);
-  Serial.println("Stop!");
+  currentDirection = NOT_FOUND;
   setBrakeLights(CRGB(255,0,0));
 }
 

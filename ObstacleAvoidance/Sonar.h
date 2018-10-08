@@ -13,9 +13,9 @@
 #define SERVO_PIN 10
 
 // Sonar Definition
-#define RIGHT_ANGLE 180 //10
+#define RIGHT_SCAN_ANGLE 180 //10
 #define MIDDLE_ANGLE 90
-#define LEFT_ANGLE 0 //180
+#define LEFT_SCAN_ANGLE 0 //180
 
 class SonarServo {
   public:
@@ -27,7 +27,7 @@ class SonarServo {
 
   private:
   Servo* servo;
-//  NewPing* sonar;
+  NewPing* sonar;
   int lastAngle = -100;
 };
 
