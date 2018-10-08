@@ -8,7 +8,7 @@
 #define LOOP_LIMIT 40
 
 // Uncomment if white tape on black floor
-//#define WHITE_ON_BLACK
+#define WHITE_ON_BLACK
 
 #ifndef WHITE_ON_BLACK
 
@@ -116,13 +116,11 @@ void loop() {
             return;
           }
           break;
-          break;
         case RIGHT:
           if (LT_R) {
             callbackRightTrace();
             return;
           }
-          break;
           break;
       }
       maintainDistanceV2(OBJECT_DISTANCE);
@@ -287,32 +285,13 @@ void maintainDistanceV2(int distanceToMaintain) {
 }
 
 void traceLine() {
-  if (!LT_M && !LT_R && !LT_L) {
-    setSpeed(175);
-    switch (lastDirection) {
-      //      case FORWARD:
-      //        backward();
-      //        break;
-      case LEFT:
-        rotateLeft();
-        //        lastDirection = LEFT;
-        break;
-      case RIGHT:
-        rotateRight();
-        //        lastDirection = RIGHT;
-        break;
-    }
-  } else if (LT_M && LT_R && LT_L) { // Perpendicular
+  if (LT_M && LT_R) {
     setSpeed(225);
-    rotateRight(1);
-    return; // TODO:
-  } else if (LT_M && LT_R) {
-    setSpeed(225);
-    rotateRight(1);
+    turnRight(2);
     lastDirection = RIGHT;
   } else if (LT_M && LT_L) {
     setSpeed(225);
-    rotateLeft(1);
+    turnLeft(2);
     lastDirection = LEFT;
   } else if (LT_M) {
     setSpeed(150);
