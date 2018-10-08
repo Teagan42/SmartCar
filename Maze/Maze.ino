@@ -144,7 +144,7 @@ Direction getOppositeDirection(Direction dir) {
 }
 
 Direction getAvoidanceDirection() {
-  return Right;
+  return RIGHT;
 }
 
 int directionToAngle(Direction dir) {
@@ -307,7 +307,7 @@ void traceLine() {
 
 void callbackLeftTrace() {
   avoidanceStage = STAGE_NONE;
-  stop();
+  brake();
   Serial.println("Interrupt Left");
   detachInterrupt(digitalPinToInterrupt(3));
   detachInterrupt(digitalPinToInterrupt(2));
@@ -317,7 +317,7 @@ void callbackLeftTrace() {
 
 void callbackRightTrace() {
   avoidanceStage = STAGE_NONE;
-  stop();
+  brake();
   detachInterrupt(digitalPinToInterrupt(3));
   detachInterrupt(digitalPinToInterrupt(2));
   rotateToward(avoidanceDirection, 1);

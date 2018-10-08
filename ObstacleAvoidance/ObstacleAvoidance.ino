@@ -54,12 +54,23 @@ Direction lastDirection;
 int avoidanceStage = STAGE_NONE;
 int lastDistance = 0;
 Direction avoidanceDirection = NOT_FOUND;
-int forwardAvoidanceCount = 0;
 int scanAngle;
 int tooFarCycles = 0;
+bool shouldAttachInterrupts = false;
 
 void callbackRightTrace();
 void callbackLeftTrace();
+
+void attachInterrupts() {
+  switch (avoidanceDirection) {
+    case LEFT:
+      attachInterrupt(digitalPinToInterrupt(2), callbackLeftTrace, LT_INTERRUPT);
+      break;
+    case RIGHT:
+      attachInterrupt(digitalPinToInterrupt(3), callbackRightTrace, LT_INTERRUPT);
+      break;
+  }
+}
 
 Servo servo;
 SonarServo sonar(&servo);
@@ -78,37 +89,33 @@ void loop() {
       traceLine();
       if (sonar.pingDistance(MIDDLE_ANGLE) < OBJECT_DISTANCE) {
         avoidanceStage = STAGE_INITIAL;
-        stop();
+        brake();
       }
       break;
     case STAGE_INITIAL:
-      stop();
+      shouldAttachInterrupts = false;
+      brake();
+      Serial.print("STAGE_INITIAL");
       avoidanceDirection = getAvoidanceDirection();
-      Serial.println("Found obstacle, rotating");
-      avoidanceStage += 1;
+      Serial.print("\tGoing ");
+      Serial.println((avoidanceDirection == LEFT ? "LEFT" : "RIGHT"));
+      avoidanceStage = STAGE_1;
       backward();
+      delay(300);
+      turnToward(avoidanceDirection, 2);
       delay(200);
       lastDistance = sonar.pingDistance(MIDDLE_ANGLE);
-      rotateToward(avoidanceDirection, 8);
-      delay(150);
-      forwardAvoidanceCount = 0;
       break;
     case STAGE_2:
-      switch (avoidanceDirection) {
-        case LEFT:
-          attachInterrupt(digitalPinToInterrupt(2), callbackLeftTrace, LT_INTERRUPT);
-          break;
-        case RIGHT:
-          attachInterrupt(digitalPinToInterrupt(3), callbackRightTrace, LT_INTERRUPT);
-          break;
-      }
-      avoidanceStage += 1;
+      Serial.println("STAGE_2");
+      attachInterrupts();
+      shouldAttachInterrupts = true;
+      avoidanceStage = STAGE_1;
     case STAGE_1:
-      if (forwardAvoidanceCount > -1) {
+      Serial.println("STAGE_1");
         avoidanceStage += 1;
-        forwardAvoidanceCount = 0;
-      }
     case STAGE_3:
+      Serial.println("STAGE_2");
       switch (avoidanceDirection) {
         case LEFT:
           if (LT_L) {
@@ -143,31 +150,32 @@ Direction getOppositeDirection(Direction dir) {
 }
 
 Direction getAvoidanceDirection() {
-  DistanceAngle minDistanceAngle(0, 10000);
-  DistanceAngle maxDistanceAngle(0, -1);
-  for (int i = 20; i < (RIGHT_SCAN_ANGLE - LEFT_SCAN_ANGLE) / 2; i += 20) {
-    for (int j = 0; j < 2; j++) {
-      int angle = MIDDLE_ANGLE + pow(-1, j) * i;
-      int distance = sonar.pingDistance(angle);
-      if (distance < minDistanceAngle.distance) {
-        minDistanceAngle = DistanceAngle(angle, distance);
-      }
-      if (distance > maxDistanceAngle.distance) {
-        maxDistanceAngle = DistanceAngle(angle, distance);
-      }
-    }
-    if (i > 20 && abs(maxDistanceAngle.distance - minDistanceAngle.distance) > 5)  {
-      break;
-    }
-  }
-
-  if (maxDistanceAngle.angle < MIDDLE_ANGLE) {
-    Serial.println("Going around left");
-    return LEFT;
-  } else {
-    Serial.println("Going around right");
-    return RIGHT;
-  }
+  return LEFT;
+//  DistanceAngle minDistanceAngle(0, 10000);
+//  DistanceAngle maxDistanceAngle(0, -1);
+//  for (int i = 20; i < (RIGHT_SCAN_ANGLE - LEFT_SCAN_ANGLE) / 2; i += 20) {
+//    for (int j = 0; j < 2; j++) {
+//      int angle = MIDDLE_ANGLE + pow(-1, j) * i;
+//      int distance = sonar.pingDistance(angle);
+//      if (distance < minDistanceAngle.distance) {
+//        minDistanceAngle = DistanceAngle(angle, distance);
+//      }
+//      if (distance > maxDistanceAngle.distance) {
+//        maxDistanceAngle = DistanceAngle(angle, distance);
+//      }
+//    }
+//    if (i > 20 && abs(maxDistanceAngle.distance - minDistanceAngle.distance) > 5)  {
+//      break;
+//    }
+//  }
+//
+//  if (maxDistanceAngle.angle < MIDDLE_ANGLE) {
+//    Serial.println("Going around left");
+//    return LEFT;
+//  } else {
+//    Serial.println("Going around right");
+//    return RIGHT;
+//  }
 }
 
 int directionToAngle(Direction dir) {
@@ -237,7 +245,7 @@ void maintainDistanceV2(int distanceToMaintain) {
   int minimumSafeDistance = distanceToMaintain * .75;
   int maximumPreferredDistance = distanceToMaintain * 1.25;
 
-  distance = min(sonar.pingDistance(scanAngle), sonar.pingDistance(directionToExtremeAngle(oppositeDirection)));
+  distance = min(sonar.pingDistance(scanAngle), sonar.pingDistance(oppositeExtremeAngle == scanAngle ? MIDDLE_ANGLE : oppositeExtremeAngle));
 
   bool isWayTooFar = distance > maximumPreferredDistance;
   bool isTooFar = distance > distanceToMaintain;
@@ -247,10 +255,14 @@ void maintainDistanceV2(int distanceToMaintain) {
 
   delta = lastDistance - distance;
   if (isWayTooClose) {
+    Serial.println("WAY TOO CLOSE");
+    detachInterrupt(digitalPinToInterrupt(3));
+    detachInterrupt(digitalPinToInterrupt(2));
+    brake();
     scanAngle = directionToAngle(oppositeDirection);
     tooFarCycles = 0;
     setSpeed(255);
-    int now = millis();
+    long now = millis();
     backward();
     while (millis() - now < 500) {
       if (sonar.pingDistance(scanAngle) > distanceToMaintain) {
@@ -258,28 +270,32 @@ void maintainDistanceV2(int distanceToMaintain) {
       }
     }
     turnToward(avoidanceDirection, 4);
+    if (attachInterrupts) {
+      attachInterrupts();
+    }
     delay(150);
-    setTurnSignal(CRGB(255,0,0), CRGB(0,0,0));
+    
   } else if (isWayTooFar) {
+    Serial.println("WAY TOO FAR");
     tooFarCycles += 1;
     setSpeed(255);
-    turnToward(oppositeDirection, 8);
+    turnToward(oppositeDirection, 4);
     scanAngle = directionToAcuteAngle(oppositeDirection);
-    forwardAvoidanceCount += 1;
   } else if (isReasonableDistance) {
     tooFarCycles = 0;
     if (isTooClose) {
+      Serial.println("TOO CLOSE");
       scanAngle = directionToExtremeAngle(oppositeDirection);
       if (getCurrentRotation() != avoidanceDirection) {
         rotateToward(avoidanceDirection, 3);
       }
     } else if (isTooFar) {
+      Serial.println("TOO FAR");
       scanAngle = directionToAngle(oppositeDirection);
       if (getCurrentRotation() != oppositeDirection) {
         turnToward(oppositeDirection, 3);
       }
-    } 
-    forwardAvoidanceCount += 1;
+    }
   }
   lastDistance = distance;
 }
@@ -310,20 +326,23 @@ void traceLine() {
 }
 
 void callbackLeftTrace() {
-  avoidanceStage = STAGE_NONE;
-  stop();
   Serial.println("Interrupt Left");
+  avoidanceStage = STAGE_NONE;
+  brake();
   detachInterrupt(digitalPinToInterrupt(3));
   detachInterrupt(digitalPinToInterrupt(2));
+  shouldAttachInterrupts = false;
   rotateToward(avoidanceDirection, 1);
   while(!LT_M);
 }
 
 void callbackRightTrace() {
+  Serial.println("Interrupt RIGHT");
   avoidanceStage = STAGE_NONE;
-  stop();
+  brake();
   detachInterrupt(digitalPinToInterrupt(3));
   detachInterrupt(digitalPinToInterrupt(2));
+  shouldAttachInterrupts = false;
   rotateToward(avoidanceDirection, 1);
   while(!LT_M);
 }

@@ -43,7 +43,7 @@ enum Direction {
   NOT_FOUND
 };
 
-void stop();
+void brake();
 void setBrakeLights(CRGB lightColor);
 void setTurnSignal(CRGB leftColor, CRGB rightColor);
 
@@ -67,7 +67,7 @@ void setupCar() {
   pinMode(IN4, OUTPUT);
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
-  stop();
+  brake();
   
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness( 125 );
@@ -139,7 +139,7 @@ void turnRight(int multiplier = 4) {
   setTurnSignal(CRGB(0,0,0), CRGB(255, 255, 0));
 }
 
-void stop() {
+void brake() {
   digitalWrite(ENA, LOW);
   digitalWrite(ENB, LOW);
   currentDirection = NOT_FOUND;
